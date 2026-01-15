@@ -4,27 +4,29 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   GraduationCap, 
   Users, 
-  Briefcase, 
   LogOut, 
   Search,
   Bell,
   Settings,
-  Building,
   MessageCircle,
   UserPlus,
-  Loader2
+  Sparkles
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { ConnectionRequests } from '@/components/ConnectionRequests';
 import { ConnectionsList } from '@/components/ConnectionsList';
 import { ChatWindow } from '@/components/ChatWindow';
+import { ProfileCard } from '@/components/ProfileCard';
+import { StatsCard } from '@/components/StatsCard';
+import { WelcomeHeader } from '@/components/WelcomeHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { ProfileCardSkeleton } from '@/components/ui/skeleton-card';
 
 interface Profile {
   id: string;
@@ -89,7 +91,6 @@ const StudentDashboard = () => {
   const fetchAlumniProfiles = async () => {
     setIsLoadingData(true);
     
-    // Get all alumni user_ids
     const { data: alumniRoles } = await supabase
       .from('user_roles')
       .select('user_id')
@@ -178,6 +179,29 @@ const StudentDashboard = () => {
     }
   };
 
+  const startChatWithUser = async (userId: string) => {
+    const { data: connection } = await supabase
+      .from('connections')
+      .select('*')
+      .eq('status', 'accepted')
+      .or(`and(sender_id.eq.${user?.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user?.id})`)
+      .maybeSingle();
+
+    if (connection) {
+      const profile = alumniProfiles.find(p => p.user_id === userId);
+      if (profile) {
+        setActiveChat({
+          connectionId: connection.id,
+          otherUser: {
+            user_id: profile.user_id,
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url
+          }
+        });
+      }
+    }
+  };
+
   const filteredProfiles = alumniProfiles.filter(profile => 
     profile.user_id !== user?.id &&
     (profile.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -185,11 +209,7 @@ const StudentDashboard = () => {
     profile.current_company?.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  const getConnectionStatus = (profileUserId: string) => {
+  const getConnectionStatus = (profileUserId: string): "none" | "pending" | "connected" => {
     if (acceptedConnections.has(profileUserId)) return 'connected';
     if (pendingConnections.has(profileUserId)) return 'pending';
     return 'none';
@@ -198,45 +218,56 @@ const StudentDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center animate-pulse-glow">
+            <GraduationCap className="w-6 h-6 text-white" />
+          </div>
+          <p className="text-muted-foreground animate-pulse">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-blue-50/30">
       {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b glass-effect sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-600">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-lg hidden sm:inline">Student Portal</span>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-700">Student</Badge>
+            <span className="font-bold text-lg hidden sm:inline bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Student Portal
+            </span>
           </div>
 
           <div className="flex-1 max-w-md mx-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-blue-500" />
               <Input
                 type="text"
-                placeholder="Search alumni..."
+                placeholder="Search alumni by name, department, company..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-muted/50"
+                className="pl-10 bg-muted/50 border-transparent focus:border-blue-200 focus:bg-white transition-all"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="hidden sm:flex">
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="hidden sm:flex hover:bg-blue-50 hover:text-blue-600">
               <Bell className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="hidden sm:flex">
+            <Button variant="ghost" size="icon" className="hidden sm:flex hover:bg-blue-50 hover:text-blue-600">
               <Settings className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleSignOut}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleSignOut}
+              className="hover:bg-red-50 hover:text-red-600"
+            >
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
@@ -245,174 +276,113 @@ const StudentDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
-        <div className="mb-8 animate-fade-up">
-          <div className="flex items-center gap-4 mb-2">
-            <Avatar className="w-12 h-12 border-2 border-blue-500/20">
-              <AvatarImage src={currentProfile?.avatar_url || ''} />
-              <AvatarFallback className="bg-blue-600 text-white">
-                {currentProfile ? getInitials(currentProfile.full_name) : 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-2xl font-bold">
-                Welcome, {currentProfile?.full_name || 'Student'}!
-              </h1>
-              <p className="text-muted-foreground">Connect with alumni and grow your network</p>
-            </div>
-          </div>
-        </div>
+        <WelcomeHeader
+          name={currentProfile?.full_name || 'Student'}
+          avatarUrl={currentProfile?.avatar_url || null}
+          role="student"
+          subtitle="Connect with alumni and grow your professional network"
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <Card className="shadow-soft animate-fade-up border-blue-200/50" style={{ animationDelay: '0.1s' }}>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-blue-100">
-                  <Users className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{alumniProfiles.length}</p>
-                  <p className="text-sm text-muted-foreground">Available Alumni</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="shadow-soft animate-fade-up border-green-200/50" style={{ animationDelay: '0.2s' }}>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-green-100">
-                  <UserPlus className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{acceptedConnections.size}</p>
-                  <p className="text-sm text-muted-foreground">My Connections</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="shadow-soft animate-fade-up border-purple-200/50" style={{ animationDelay: '0.3s' }}>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-purple-100">
-                  <MessageCircle className="w-6 h-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{pendingConnections.size}</p>
-                  <p className="text-sm text-muted-foreground">Pending Requests</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatsCard
+            icon={Users}
+            value={alumniProfiles.length}
+            label="Available Alumni"
+            variant="blue"
+            index={0}
+          />
+          <StatsCard
+            icon={UserPlus}
+            value={acceptedConnections.size}
+            label="My Connections"
+            variant="green"
+            index={1}
+          />
+          <StatsCard
+            icon={MessageCircle}
+            value={pendingConnections.size}
+            label="Pending Requests"
+            variant="purple"
+            index={2}
+          />
         </div>
 
         {/* Main Content with Tabs */}
         <Tabs defaultValue="alumni" className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="alumni" className="gap-2">
+          <TabsList className="grid w-full grid-cols-3 mb-6 p-1 bg-muted/50">
+            <TabsTrigger value="alumni" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <GraduationCap className="w-4 h-4" />
               <span className="hidden sm:inline">Browse Alumni</span>
             </TabsTrigger>
-            <TabsTrigger value="requests" className="gap-2">
+            <TabsTrigger value="requests" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <UserPlus className="w-4 h-4" />
               <span className="hidden sm:inline">Requests</span>
             </TabsTrigger>
-            <TabsTrigger value="messages" className="gap-2">
+            <TabsTrigger value="messages" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm relative">
               <MessageCircle className="w-4 h-4" />
               <span className="hidden sm:inline">Messages</span>
+              {acceptedConnections.size > 0 && (
+                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {acceptedConnections.size}
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="alumni">
-            <Card className="shadow-elevated border-blue-200/30">
-              <CardHeader>
+            <Card className="shadow-elevated border-blue-100/50 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-transparent pointer-events-none" />
+              <CardHeader className="relative">
                 <CardTitle className="flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5 text-blue-600" />
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100">
+                    <GraduationCap className="w-5 h-5 text-blue-600" />
+                  </div>
                   Alumni Network
+                  <Badge variant="secondary" className="ml-2">
+                    {filteredProfiles.length} available
+                  </Badge>
                 </CardTitle>
                 <CardDescription>
-                  Connect with alumni for mentorship and career guidance
+                  Connect with alumni for mentorship, career guidance, and professional growth
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative">
                 {isLoadingData ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    Loading alumni...
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {[...Array(6)].map((_, i) => (
+                      <ProfileCardSkeleton key={i} />
+                    ))}
                   </div>
                 ) : filteredProfiles.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    {searchQuery ? 'No alumni found matching your search' : 'No alumni available yet.'}
-                  </div>
+                  <EmptyState
+                    icon={searchQuery ? Search : Users}
+                    title={searchQuery ? "No alumni found" : "No alumni available yet"}
+                    description={searchQuery 
+                      ? "Try adjusting your search terms or browse all alumni" 
+                      : "Be the first to connect when alumni join the platform!"
+                    }
+                    variant="student"
+                    action={searchQuery ? (
+                      <Button variant="outline" onClick={() => setSearchQuery('')}>
+                        Clear Search
+                      </Button>
+                    ) : undefined}
+                  />
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {filteredProfiles.map((profile) => {
-                      const status = getConnectionStatus(profile.user_id);
-                      return (
-                        <Card key={profile.id} className="hover:shadow-soft transition-shadow duration-200 border-blue-100/50">
-                          <CardContent className="pt-6">
-                            <div className="flex items-start gap-4">
-                              <Avatar className="w-12 h-12">
-                                <AvatarImage src={profile.avatar_url || ''} />
-                                <AvatarFallback className="bg-blue-100 text-blue-600">
-                                  {getInitials(profile.full_name)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold truncate">{profile.full_name}</h3>
-                                <Badge variant="outline" className="text-xs bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-200 mb-1">
-                                  Alumni
-                                </Badge>
-                                {profile.current_position && (
-                                  <p className="text-sm text-muted-foreground truncate">
-                                    {profile.current_position}
-                                  </p>
-                                )}
-                                {profile.current_company && (
-                                  <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
-                                    <Building className="w-3 h-3" />
-                                    <span className="truncate">{profile.current_company}</span>
-                                  </div>
-                                )}
-                                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                  {profile.department && (
-                                    <Badge variant="outline" className="text-xs">
-                                      {profile.department}
-                                    </Badge>
-                                  )}
-                                  {profile.graduation_year && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      Class of {profile.graduation_year}
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className="mt-3">
-                                  {status === 'connected' ? (
-                                    <Badge className="bg-green-600">Connected</Badge>
-                                  ) : status === 'pending' ? (
-                                    <Badge variant="secondary">Request Sent</Badge>
-                                  ) : (
-                                    <Button
-                                      size="sm"
-                                      className="bg-blue-600 hover:bg-blue-700"
-                                      onClick={() => sendConnectionRequest(profile.user_id)}
-                                      disabled={sendingConnection === profile.user_id}
-                                    >
-                                      {sendingConnection === profile.user_id ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <>
-                                          <UserPlus className="w-4 h-4 mr-1" />
-                                          Connect
-                                        </>
-                                      )}
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                    {filteredProfiles.map((profile, index) => (
+                      <ProfileCard
+                        key={profile.id}
+                        profile={profile}
+                        role="alumni"
+                        connectionStatus={getConnectionStatus(profile.user_id)}
+                        onConnect={() => sendConnectionRequest(profile.user_id)}
+                        onMessage={() => startChatWithUser(profile.user_id)}
+                        isConnecting={sendingConnection === profile.user_id}
+                        index={index}
+                      />
+                    ))}
                   </div>
                 )}
               </CardContent>
@@ -422,9 +392,14 @@ const StudentDashboard = () => {
           <TabsContent value="requests">
             <Card className="shadow-elevated">
               <CardHeader>
-                <CardTitle>Connection Requests</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-purple-100 to-pink-100">
+                    <Sparkles className="w-5 h-5 text-purple-600" />
+                  </div>
+                  Connection Requests
+                </CardTitle>
                 <CardDescription>
-                  Review responses from alumni
+                  Review responses from alumni you've reached out to
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -436,9 +411,14 @@ const StudentDashboard = () => {
           <TabsContent value="messages">
             <Card className="shadow-elevated">
               <CardHeader>
-                <CardTitle>Messages</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-green-100 to-emerald-100">
+                    <MessageCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  Messages
+                </CardTitle>
                 <CardDescription>
-                  Chat with your connected alumni
+                  Chat with your connected alumni mentors
                 </CardDescription>
               </CardHeader>
               <CardContent>
