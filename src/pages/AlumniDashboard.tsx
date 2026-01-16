@@ -28,6 +28,8 @@ import { StatsCard } from '@/components/StatsCard';
 import { WelcomeHeader } from '@/components/WelcomeHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { ProfileCardSkeleton } from '@/components/ui/skeleton-card';
+import { JobPostingForm } from '@/components/JobPostingForm';
+import { MyJobPostings } from '@/components/MyJobPostings';
 
 interface Profile {
   id: string;
@@ -60,6 +62,8 @@ const AlumniDashboard = () => {
     connectionId: string;
     otherUser: { user_id: string; full_name: string; avatar_url: string | null };
   } | null>(null);
+  const [jobPostingsRefresh, setJobPostingsRefresh] = useState(0);
+  const [myJobsCount, setMyJobsCount] = useState(0);
 
   useEffect(() => {
     if (!user && !loading) {
@@ -73,8 +77,23 @@ const AlumniDashboard = () => {
       fetchStudentProfiles();
       fetchConnectionStatus();
       fetchPendingRequestsCount();
+      fetchMyJobsCount();
     }
   }, [user]);
+
+  const fetchMyJobsCount = async () => {
+    if (!user) return;
+    const { count } = await supabase
+      .from('job_postings')
+      .select('*', { count: 'exact', head: true })
+      .eq('author_id', user.id);
+    setMyJobsCount(count || 0);
+  };
+
+  const handleJobPosted = () => {
+    setJobPostingsRefresh(prev => prev + 1);
+    fetchMyJobsCount();
+  };
 
   const fetchUserData = async () => {
     if (!user) return;
@@ -307,13 +326,22 @@ const AlumniDashboard = () => {
 
         {/* Main Content with Tabs */}
         <Tabs defaultValue="requests" className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
-          <TabsList className="grid w-full grid-cols-3 mb-6 p-1 bg-muted/50">
+          <TabsList className="grid w-full grid-cols-4 mb-6 p-1 bg-muted/50">
             <TabsTrigger value="requests" className="gap-2 relative data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <UserPlus className="w-4 h-4" />
               <span className="hidden sm:inline">Requests</span>
               {pendingRequestsCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
                   {pendingRequestsCount}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="jobs" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm relative">
+              <Briefcase className="w-4 h-4" />
+              <span className="hidden sm:inline">Jobs</span>
+              {myJobsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {myJobsCount}
                 </span>
               )}
             </TabsTrigger>
@@ -353,6 +381,36 @@ const AlumniDashboard = () => {
               </CardHeader>
               <CardContent className="relative">
                 <ConnectionRequests onConnectionAccepted={handleConnectionAccepted} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="jobs">
+            <Card className="shadow-elevated border-amber-100/50 overflow-hidden relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 via-transparent to-transparent pointer-events-none" />
+              <CardHeader className="relative">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <div className="p-2 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100">
+                        <Briefcase className="w-5 h-5 text-amber-600" />
+                      </div>
+                      Job & Internship Postings
+                      {myJobsCount > 0 && (
+                        <Badge variant="secondary" className="ml-2">
+                          {myJobsCount} posted
+                        </Badge>
+                      )}
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Share job opportunities and internships with students
+                    </CardDescription>
+                  </div>
+                  <JobPostingForm onJobPosted={handleJobPosted} />
+                </div>
+              </CardHeader>
+              <CardContent className="relative">
+                <MyJobPostings refreshTrigger={jobPostingsRefresh} onJobUpdated={handleJobPosted} />
               </CardContent>
             </Card>
           </TabsContent>

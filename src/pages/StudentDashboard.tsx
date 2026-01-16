@@ -15,7 +15,8 @@ import {
   Settings,
   MessageCircle,
   UserPlus,
-  Sparkles
+  Sparkles,
+  Briefcase
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -27,6 +28,7 @@ import { StatsCard } from '@/components/StatsCard';
 import { WelcomeHeader } from '@/components/WelcomeHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { ProfileCardSkeleton } from '@/components/ui/skeleton-card';
+import { JobPostingsList } from '@/components/JobPostingsList';
 
 interface Profile {
   id: string;
@@ -59,6 +61,7 @@ const StudentDashboard = () => {
     otherUser: { user_id: string; full_name: string; avatar_url: string | null };
   } | null>(null);
   const [sendingConnection, setSendingConnection] = useState<string | null>(null);
+  const [jobsCount, setJobsCount] = useState(0);
 
   useEffect(() => {
     if (!user && !loading) {
@@ -71,8 +74,17 @@ const StudentDashboard = () => {
       fetchUserData();
       fetchAlumniProfiles();
       fetchConnectionStatus();
+      fetchJobsCount();
     }
   }, [user]);
+
+  const fetchJobsCount = async () => {
+    const { count } = await supabase
+      .from('job_postings')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true);
+    setJobsCount(count || 0);
+  };
 
   const fetchUserData = async () => {
     if (!user) return;
@@ -309,11 +321,20 @@ const StudentDashboard = () => {
         </div>
 
         {/* Main Content with Tabs */}
-        <Tabs defaultValue="alumni" className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
-          <TabsList className="grid w-full grid-cols-3 mb-6 p-1 bg-muted/50">
+        <Tabs defaultValue="jobs" className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
+          <TabsList className="grid w-full grid-cols-4 mb-6 p-1 bg-muted/50">
+            <TabsTrigger value="jobs" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm relative">
+              <Briefcase className="w-4 h-4" />
+              <span className="hidden sm:inline">Jobs</span>
+              {jobsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {jobsCount > 9 ? '9+' : jobsCount}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="alumni" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <GraduationCap className="w-4 h-4" />
-              <span className="hidden sm:inline">Browse Alumni</span>
+              <span className="hidden sm:inline">Alumni</span>
             </TabsTrigger>
             <TabsTrigger value="requests" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <UserPlus className="w-4 h-4" />
@@ -329,6 +350,31 @@ const StudentDashboard = () => {
               )}
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="jobs">
+            <Card className="shadow-elevated border-amber-100/50 overflow-hidden relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 via-transparent to-transparent pointer-events-none" />
+              <CardHeader className="relative">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100">
+                    <Briefcase className="w-5 h-5 text-amber-600" />
+                  </div>
+                  Job & Internship Opportunities
+                  {jobsCount > 0 && (
+                    <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-700">
+                      {jobsCount} available
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  Explore career opportunities posted by alumni in your network
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="relative">
+                <JobPostingsList />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="alumni">
             <Card className="shadow-elevated border-blue-100/50 overflow-hidden">
