@@ -41,6 +41,54 @@ export type Database = {
         }
         Relationships: []
       }
+      job_postings: {
+        Row: {
+          application_link: string | null
+          author_id: string
+          company: string
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          location: string | null
+          requirements: string | null
+          salary_range: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          application_link?: string | null
+          author_id: string
+          company: string
+          created_at?: string
+          description: string
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          requirements?: string | null
+          salary_range?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          application_link?: string | null
+          author_id?: string
+          company?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          requirements?: string | null
+          salary_range?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           connection_id: string
