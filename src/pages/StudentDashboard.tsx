@@ -214,12 +214,21 @@ const StudentDashboard = () => {
     }
   };
 
-  const filteredProfiles = alumniProfiles.filter(profile => 
-    profile.user_id !== user?.id &&
-    (profile.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    profile.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    profile.current_company?.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const normalizedSearch = searchQuery.toLowerCase().trim();
+  const filteredProfiles = alumniProfiles.filter(profile => {
+    if (profile.user_id === user?.id) return false;
+    if (!normalizedSearch) return true;
+    
+    const searchFields = [
+      profile.full_name,
+      profile.department,
+      profile.current_company,
+      profile.current_position,
+      profile.graduation_year?.toString()
+    ].filter(Boolean).map(f => f!.toLowerCase());
+    
+    return searchFields.some(field => field.includes(normalizedSearch));
+  });
 
   const getConnectionStatus = (profileUserId: string): "none" | "pending" | "connected" => {
     if (acceptedConnections.has(profileUserId)) return 'connected';
@@ -271,7 +280,12 @@ const StudentDashboard = () => {
             <Button variant="ghost" size="icon" className="hidden sm:flex hover:bg-blue-50 hover:text-blue-600">
               <Bell className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="hidden sm:flex hover:bg-blue-50 hover:text-blue-600">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="hidden sm:flex hover:bg-blue-50 hover:text-blue-600"
+              onClick={() => navigate('/settings')}
+            >
               <Settings className="w-5 h-5" />
             </Button>
             <Button 
