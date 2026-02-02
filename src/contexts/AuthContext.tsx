@@ -50,18 +50,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const redirectUrl = `${window.location.origin}/`;
       
+      // Pass role in metadata - trigger will handle user_roles insertion securely
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: redirectUrl,
+          data: {
+            role: role, // This is read by the trigger to assign the role
+          }
         }
       });
 
       if (error) throw error;
 
       if (data.user) {
-        // Create profile
+        // Create profile - role is handled by database trigger
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
@@ -71,16 +75,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
 
         if (profileError) throw profileError;
-
-        // Create user role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: data.user.id,
-            role: role,
-          });
-
-        if (roleError) throw roleError;
       }
 
       return { error: null };
