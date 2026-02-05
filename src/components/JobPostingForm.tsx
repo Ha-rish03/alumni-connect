@@ -40,6 +40,15 @@ export const JobPostingForm = ({ onJobPosted }: JobPostingFormProps) => {
 
     setIsSubmitting(true);
 
+    // Get author's name for the email
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const authorName = profileData?.full_name || 'An alumni';
+
     const { error } = await supabase
       .from('job_postings')
       .insert({
@@ -59,6 +68,25 @@ export const JobPostingForm = ({ onJobPosted }: JobPostingFormProps) => {
       toast.error('Failed to create job posting');
     } else {
       toast.success(`${formData.type === 'internship' ? 'Internship' : 'Job'} posted successfully!`);
+      
+      // Send email notification to students (fire and forget)
+      supabase.functions.invoke('send-job-notification', {
+        body: {
+          title: formData.title.trim(),
+          company: formData.company.trim(),
+          description: formData.description.trim(),
+          location: formData.location.trim() || undefined,
+          type: formData.type,
+          authorName
+        }
+      }).then(({ error: notifyError }) => {
+        if (notifyError) {
+          console.error('Failed to send notification emails:', notifyError);
+        } else {
+          console.log('Notification emails sent successfully');
+        }
+      });
+
       setFormData({
         title: '',
         company: '',
