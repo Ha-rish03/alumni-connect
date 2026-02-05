@@ -339,63 +339,65 @@ const ProfileSettings = () => {
           </CardContent>
         </Card>
 
-        {/* Professional Info */}
-        <Card className="mb-6 shadow-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-muted-foreground" />
-              Professional Information
-            </CardTitle>
-            <CardDescription>
-              Your current work details
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="currentCompany">Current Company</Label>
-                <div className="relative">
-                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="currentCompany"
-                    value={currentCompany}
-                    onChange={(e) => setCurrentCompany(e.target.value)}
-                    placeholder="Google, Microsoft, etc."
-                    className="pl-10"
-                  />
+        {/* Professional Info - Only for Alumni */}
+        {userRole === 'alumni' && (
+          <Card className="mb-6 shadow-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-muted-foreground" />
+                Professional Information
+              </CardTitle>
+              <CardDescription>
+                Your current work details
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="currentCompany">Current Company</Label>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="currentCompany"
+                      value={currentCompany}
+                      onChange={(e) => setCurrentCompany(e.target.value)}
+                      placeholder="Google, Microsoft, etc."
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="currentPosition">Current Position</Label>
+                  <div className="relative">
+                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="currentPosition"
+                      value={currentPosition}
+                      onChange={(e) => setCurrentPosition(e.target.value)}
+                      placeholder="Software Engineer"
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="currentPosition">Current Position</Label>
+                <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
                 <div className="relative">
-                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="currentPosition"
-                    value={currentPosition}
-                    onChange={(e) => setCurrentPosition(e.target.value)}
-                    placeholder="Software Engineer"
+                    id="linkedinUrl"
+                    value={linkedinUrl}
+                    onChange={(e) => setLinkedinUrl(e.target.value)}
+                    placeholder="https://linkedin.com/in/yourprofile"
                     className="pl-10"
                   />
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
-              <div className="relative">
-                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="linkedinUrl"
-                  value={linkedinUrl}
-                  onChange={(e) => setLinkedinUrl(e.target.value)}
-                  placeholder="https://linkedin.com/in/yourprofile"
-                  className="pl-10"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Save Button (Mobile) */}
         <div className="sm:hidden">
