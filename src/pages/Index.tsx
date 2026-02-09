@@ -74,7 +74,7 @@ const Index = () => {
           
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 animate-fade-up" style={{ animationDelay: '0.1s' }}>
             Your Alumni Network,{' '}
-            <span className="text-transparent bg-clip-text gradient-primary">
+            <span className="text-transparent bg-clip-text gradient-accent">
               Reimagined
             </span>
           </h1>
