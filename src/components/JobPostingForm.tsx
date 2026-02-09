@@ -185,7 +185,7 @@ export const JobPostingForm = ({ onJobPosted }: JobPostingFormProps) => {
             <Label htmlFor="salary">Salary Range</Label>
             <Input
               id="salary"
-              placeholder="e.g. 80,000 - 120,000"
+              placeholder="e.g. ₹8,00,000 - ₹12,00,000"
               value={formData.salary_range}
               onChange={(e) => setFormData(prev => ({ ...prev, salary_range: e.target.value }))}
             />

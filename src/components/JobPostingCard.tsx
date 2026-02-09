@@ -109,7 +109,7 @@ export const JobPostingCard = ({ job, index = 0, showAuthor = true }: JobPosting
           )}
           {job.salary_range && (
             <span className="text-green-600 font-medium">
-              {job.salary_range}
+              ₹{job.salary_range}
             </span>
           )}
         </div>
