@@ -183,16 +183,12 @@ export const JobPostingForm = ({ onJobPosted }: JobPostingFormProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="salary">Salary Range</Label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                id="salary"
-                placeholder="e.g. $80,000 - $120,000"
-                value={formData.salary_range}
-                onChange={(e) => setFormData(prev => ({ ...prev, salary_range: e.target.value }))}
-                className="pl-10"
-              />
-            </div>
+            <Input
+              id="salary"
+              placeholder="e.g. 80,000 - 120,000"
+              value={formData.salary_range}
+              onChange={(e) => setFormData(prev => ({ ...prev, salary_range: e.target.value }))}
+            />
           </div>
 
           <div className="space-y-2">

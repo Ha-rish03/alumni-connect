@@ -108,8 +108,7 @@ export const JobPostingCard = ({ job, index = 0, showAuthor = true }: JobPosting
             </span>
           )}
           {job.salary_range && (
-            <span className="flex items-center gap-1 text-green-600 font-medium">
-              <DollarSign className="w-4 h-4" />
+            <span className="text-green-600 font-medium">
               {job.salary_range}
             </span>
           )}
